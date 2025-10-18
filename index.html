@@ -1,385 +1,419 @@
-import React, { useState, useEffect } from 'react';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daby: Inglês LEGO para Brasileiros</title>
+    <!-- 1. Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. React CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 3. Babel CDN to compile JSX in the browser (essential for single-file React deployment) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* Optional: Set a default font and smooth scrolling */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Custom styles for the app layout */
+        #root {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <!-- React App mounts here -->
+    </div>
 
-// Data structure holding the lessons
-const lessons = [
-  {
-    id: 1,
-    bp: "Vamos estudar?",
-    title: "Sugerindo Ação (The 'Shall We/Let's' Catch)",
-    variations: {
-      essential: "Shall we study?",
-      polite: "Would you like to study now?",
-      native: "Wanna study? / Let's study, okay?",
-    },
-    steps: [
-      { bp: "Vamos", literal: "Let's (Go)", correct: "Shall we...", catch: "O 'Vamos' de sugestão no BP tem várias traduções. 'Shall we' é clássico para pergunta/sugestão. 'Let's' é para afirmação/sugestão ('Let's study!'). O catch: 'Shall we' inverte a ordem natural de uma frase normal (sujeito + verbo)." },
-      { bp: "estudar?", literal: "to study", correct: "study?", catch: "Simples. O verbo (to study) vai sem o 'to' após o 'Shall we...'" },
-    ]
-  },
-  {
-    id: 2,
-    bp: "O que você quer comer?",
-    title: "Estrutura de Pergunta (Ordem Invertida com Auxiliar)",
-    variations: {
-      essential: "What do you want to eat?",
-      polite: "What would you care to eat?",
-      native: "Whatcha wanna eat?",
-    },
-    steps: [
-      { bp: "O que", literal: "The what", correct: "What", catch: "Simples: 'O que' é 'What'." },
-      { bp: "você", literal: "you", correct: "do you", catch: "THE CATCH (O GRANDE ERRO): Depois do WH-WORD ('What'), o Inglês *exige* o **VERBO AUXILIAR** ('Do/Does/Did') antes do sujeito ('You'). Ordem: WH-WORD + AUXILIAR + SUBJECT + VERB." },
-      { bp: "quer comer?", literal: "want to eat?", correct: "want to eat?", catch: "O verbo 'querer' (to want) é seguido por outro verbo (to eat), que precisa do 'to' no meio." },
-    ]
-  },
-  {
-    id: 3,
-    bp: "Eu sou de Portugal. sim sou.",
-    title: "Respostas Curtas com o Verbo 'To Be'",
-    variations: {
-      essential: "I am from Portugal. Yes, I am.",
-      polite: "I originate from Portugal. Yes, I do.", // focusing on origin verb
-      native: "From Portugal. Yeah, I am.",
-    },
-    steps: [
-      { bp: "Eu sou de Portugal.", literal: "I am from THE Portugal.", correct: "I am from Portugal.", catch: "Estrutura direta: Sujeito + Verbo 'to be' (conjugado) + Complemento." }, 
-      { bp: "sim sou.", literal: "yes I am (sou is omitted)", correct: "Yes, I am.", catch: "THE CATCH: No Português, basta 'Sim, sou'. Em Inglês, respostas curtas *sempre* exigem o Sujeito + Verbo Auxiliar/To Be. Você *não* pode dizer apenas 'Yes, am'." },
-    ]
-  },
-  {
-    id: 4,
-    bp: "Há quanto tempo que você estuda Italiano? / Faz quanto tempo que você estuda Italiano?",
-    title: "Duração: Ação que Começou no Passado e Continua (Present Perfect)",
-    variations: {
-      essential: "How long have you been studying Italian?",
-      polite: "Could you tell me how long you have been learning Italian?",
-      native: "How long you been studying Italian for?",
-    },
-    steps: [
-      { bp: "Há quanto tempo / Faz quanto tempo", literal: "There is how much time / Makes how much time", correct: "How long", catch: "Esqueça a tradução literal. Use 'How long' para perguntar sobre duração de tempo." },
-      { bp: "que você estuda Italiano?", literal: "that you study Italian?", correct: "have you been studying Italian?", catch: "THE CATCH (ERRO GRAVE): Para ações contínuas que vêm do passado ('Há/Faz'), o Inglês usa o **Present Perfect Continuous** ('have you been studying'). Jamais use o presente simples ('do you study')." },
-    ]
-  },
-  {
-    id: 5,
-    bp: "Eu estudo inglês faz / há 3 anos.",
-    title: "Declarando Duração (Present Perfect II)",
-    variations: {
-      essential: "I have been studying English for 3 years.",
-      polite: "I have had the pleasure of studying English for three years.",
-      native: "Been studying English for 3 years now.",
-    },
-    steps: [
-      { bp: "Eu estudo inglês", literal: "I study English", correct: "I have been studying English", catch: "Ação que começou e continua: O presente ('Eu estudo') vira **Present Perfect Continuous** ('I have been studying') em Inglês quando há duração de tempo." },
-      { bp: "faz / há 3 anos.", literal: "makes / there is 3 years.", correct: "for 3 years.", catch: "THE CATCH: O 'há' ou 'faz' de duração é traduzido por **'for'** (por), seguido da quantidade de tempo. Jamais a tradução literal!" },
-    ]
-  },
-  {
-    id: 6,
-    bp: "Você já foi para a China?",
-    title: "Experiência de Vida ('Have you ever been to...')",
-    variations: {
-      essential: "Have you ever been to China?",
-      polite: "May I ask if you have ever traveled to China?",
-      native: "Been to China before?",
-    },
-    steps: [
-      { bp: "Você já foi", literal: "You already went", correct: "Have you ever been", catch: "THE CATCH: Para perguntar sobre uma experiência de vida ('Já fiz/fui?'), o Inglês usa o **Present Perfect** com 'ever' ('Have you ever...'). O verbo 'to be' ('been') significa 'visitar e voltar'." },
-      { bp: "para a China?", literal: "to the China?", correct: "to China?", catch: "Em Inglês, não usamos o artigo 'the' antes de nomes de países (exceto exceções como 'The United States')." },
-    ]
-  },
-    {
-    id: 7,
-    bp: "A festa é quando?",
-    title: "Perguntando o Tempo (Inversão Simples)",
-    variations: {
-      essential: "When is the party?",
-      polite: "Could you tell me when the party is scheduled?",
-      native: "When's the party at?",
-    },
-    steps: [
-      { bp: "A festa", literal: "-", correct: "The party", catch: "O sujeito da frase." },
-      { bp: "é quando?", literal: "is when?", correct: "is when?", catch: "THE CATCH: Em Português, o 'Quando' pode vir no final. Em Inglês, ele começa a pergunta ('When'). A ordem é: WH-WORD + VERB + SUBJECT. (When is the party)." },
-    ]
-  },
-    {
-    id: 8,
-    bp: "Como está o bolo?",
-    title: "Perguntando a Condição (Omissão de Auxiliar)",
-    variations: {
-      essential: "How is the cake?",
-      polite: "Would you kindly describe the condition of the cake?",
-      native: "How's the cake?",
-    },
-    steps: [
-      { bp: "Como", literal: "-", correct: "How", catch: "Simples: 'Como' é 'How'." },
-      { bp: "está o bolo?", literal: "-", correct: "is the cake?", catch: "THE CATCH: A ordem no Inglês é **WH-WORD + VERB + SUBJECT** ('How is the cake?'). A ordem é mais rígida que no BP. Você não precisa de um auxiliar 'Do' aqui porque o 'is' já é o verbo principal (verbo 'to be')." },
-    ]
-  },
-  // --- NOVAS LIÇÕES ---
-  {
-    id: 9,
-    bp: "Como é o gato?",
-    title: "Perguntando a Descrição (The 'What... like' Catch)",
-    variations: {
-      essential: "What is the cat like?",
-      polite: "Could you describe the cat for me?",
-      native: "What's the cat like?",
-    },
-    steps: [
-      { bp: "Como é", literal: "-", correct: "What is... like?", catch: "THE CATCH: Para perguntar sobre **descrição** ou **características gerais** ('Como ele é?'), o Inglês usa **'What is... like?'**. 'How is' é usado apenas para estado (saúde, humor) no momento." },
-      { bp: "o gato?", literal: "the cat?", correct: "the cat?", catch: "Simples: O sujeito da frase." },
-    ]
-  },
-  {
-    id: 10,
-    bp: "A comida está boa",
-    title: "Afirmação de Qualidade (Adjective vs. Adverb)",
-    variations: {
-      essential: "The food is good.",
-      polite: "The meal is quite delicious.",
-      native: "Food's good. / It's tasting good.",
-    },
-    steps: [
-      { bp: "A comida", literal: "-", correct: "The food", catch: "A palavra 'food' é singular e incontável em Inglês, por isso o verbo é 'is'." },
-      { bp: "está boa", literal: "is well", correct: "is good", catch: "THE CATCH: 'Boa' é um adjetivo (qualidade) e deve ser traduzido por **'good'**. 'Well' é um advérbio (modo) e é usado para descrever como uma ação é feita (e.g., 'He speaks English well')." },
-    ]
-  },
-  {
-    id: 11,
-    bp: "As pessoas são simpáticas",
-    title: "Plural e Falsos Cognatos (Nice vs. Sympathetic)",
-    variations: {
-      essential: "The people are nice.",
-      polite: "The people seem quite friendly.",
-      native: "Everyone's pretty nice here.",
-    },
-    steps: [
-      { bp: "As pessoas", literal: "-", correct: "The people", catch: "THE CATCH: 'People' já é plural em Inglês (não use 'peoples' para se referir a um grupo geral de pessoas), e o verbo deve ser conjugado no plural: 'are'." },
-      { bp: "são simpáticas", literal: "are sympathetic", correct: "are nice / are friendly", catch: "ERRO DE VOCABULÁRIO: 'Sympathetic' (simpatético) significa compadecido/compreensivo. Para dizer que a pessoa é agradável, use **'nice'** ou **'friendly'**." },
-    ]
-  },
-  {
-    id: 12,
-    bp: "Você está assistindo?",
-    title: "Perguntas no Presente Contínuo (Ação Atual)",
-    variations: {
-      essential: "Are you watching?",
-      polite: "Are you currently watching something?",
-      native: "Ya watching that? / Watching?",
-    },
-    steps: [
-      { bp: "Você está", literal: "-", correct: "Are you", catch: "THE CATCH: Para fazer uma pergunta no Presente Contínuo ('-ndo'), você deve **inverter** a ordem: **'To Be' + Sujeito**. (Are you...)." },
-      { bp: "assistindo?", literal: "-", correct: "watching?", catch: "Ação que ocorre *agora*. O verbo principal (watch) deve ter a terminação **-ing**." },
-    ]
-  },
-  {
-    id: 13,
-    bp: "Você está bem?",
-    title: "Perguntas sobre Bem-Estar (Are you...)",
-    variations: {
-      essential: "Are you okay?",
-      polite: "Is everything alright with you?",
-      native: "You good? / You alright?",
-    },
-    steps: [
-      { bp: "Você está", literal: "You are", correct: "Are you", catch: "THE CATCH: Novamente, a pergunta exige a **inversão** do verbo 'To Be' e o sujeito: **'Are you...'**" },
-      { bp: "bem?", literal: "well?", correct: "okay? / well?", catch: "Embora 'Are you well?' seja correto, **'Are you okay?'** é a forma mais comum e abrangente para perguntar sobre saúde, humor ou se algo deu errado." },
-    ]
-  },
-];
+    <!-- The React code must be placed inside a script tag with type="text/babel" -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-// VariationButton is updated to handle dark mode styles
-const VariationButton = ({ label, selected, onClick, isDarkMode }) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
-      selected
-        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/50'
-        : isDarkMode
-          ? 'bg-indigo-800/50 text-indigo-300 hover:bg-indigo-700/70'
-          : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-    }`}
-  >
-    {label}
-  </button>
-);
+        // Data structure holding the lessons
+        const lessons = [
+          {
+            id: 1,
+            bp: "Vamos estudar?",
+            title: "Sugerindo Ação (The 'Shall We/Let's' Catch)",
+            variations: {
+              essential: "Shall we study?",
+              polite: "Would you like to study now?",
+              native: "Wanna study? / Let's study, okay?",
+            },
+            steps: [
+              { bp: "Vamos", literal: "Let's (Go)", correct: "Shall we...", catch: "O 'Vamos' de sugestão no BP tem várias traduções. 'Shall we' é clássico para pergunta/sugestão. 'Let's' é para afirmação/sugestão ('Let's study!'). O catch: 'Shall we' inverte a ordem natural de uma frase normal (sujeito + verbo)." },
+              { bp: "estudar?", literal: "to study", correct: "study?", catch: "Simples. O verbo (to study) vai sem o 'to' após o 'Shall we...'" },
+            ]
+          },
+          {
+            id: 2,
+            bp: "O que você quer comer?",
+            title: "Estrutura de Pergunta (Ordem Invertida com Auxiliar)",
+            variations: {
+              essential: "What do you want to eat?",
+              polite: "What would you care to eat?",
+              native: "Whatcha wanna eat?",
+            },
+            steps: [
+              { bp: "O que", literal: "The what", correct: "What", catch: "Simples: 'O que' é 'What'." },
+              { bp: "você", literal: "you", correct: "do you", catch: "THE CATCH (O GRANDE ERRO): Depois do WH-WORD ('What'), o Inglês *exige* o **VERBO AUXILIAR** ('Do/Does/Did') antes do sujeito ('You'). Ordem: WH-WORD + AUXILIAR + SUBJECT + VERB." },
+              { bp: "quer comer?", literal: "want to eat?", correct: "want to eat?", catch: "O verbo 'querer' (to want) é seguido por outro verbo (to eat), que precisa do 'to' no meio." },
+            ]
+          },
+          {
+            id: 3,
+            bp: "Eu sou de Portugal. sim sou.",
+            title: "Respostas Curtas com o Verbo 'To Be'",
+            variations: {
+              essential: "I am from Portugal. Yes, I am.",
+              polite: "I originate from Portugal. Yes, I do.", // focusing on origin verb
+              native: "From Portugal. Yeah, I am.",
+            },
+            steps: [
+              { bp: "Eu sou de Portugal.", literal: "I am from THE Portugal.", correct: "I am from Portugal.", catch: "Estrutura direta: Sujeito + Verbo 'to be' (conjugado) + Complemento." }, 
+              { bp: "sim sou.", literal: "yes I am (sou is omitted)", correct: "Yes, I am.", catch: "THE CATCH: No Português, basta 'Sim, sou'. Em Inglês, respostas curtas *sempre* exigem o Sujeito + Verbo Auxiliar/To Be. Você *não* pode dizer apenas 'Yes, am'." },
+            ]
+          },
+          {
+            id: 4,
+            bp: "Há quanto tempo que você estuda Italiano? / Faz quanto tempo que você estuda Italiano?",
+            title: "Duração: Ação que Começou no Passado e Continua (Present Perfect)",
+            variations: {
+              essential: "How long have you been studying Italian?",
+              polite: "Could you tell me how long you have been learning Italian?",
+              native: "How long you been studying Italian for?",
+            },
+            steps: [
+              { bp: "Há quanto tempo / Faz quanto tempo", literal: "There is how much time / Makes how much time", correct: "How long", catch: "Esqueça a tradução literal. Use 'How long' para perguntar sobre duração de tempo." },
+              { bp: "que você estuda Italiano?", literal: "that you study Italian?", correct: "have you been studying Italian?", catch: "THE CATCH (ERRO GRAVE): Para ações contínuas que vêm do passado ('Há/Faz'), o Inglês usa o **Present Perfect Continuous** ('have you been studying'). Jamais use o presente simples ('do you study')." },
+            ]
+          },
+          {
+            id: 5,
+            bp: "Eu estudo inglês faz / há 3 anos.",
+            title: "Declarando Duração (Present Perfect II)",
+            variations: {
+              essential: "I have been studying English for 3 years.",
+              polite: "I have had the pleasure of studying English for three years.",
+              native: "Been studying English for 3 years now.",
+            },
+            steps: [
+              { bp: "Eu estudo inglês", literal: "I study English", correct: "I have been studying English", catch: "Ação que começou e continua: O presente ('Eu estudo') vira **Present Perfect Continuous** ('I have been studying') em Inglês quando há duração de tempo." },
+              { bp: "faz / há 3 anos.", literal: "makes / there is 3 years.", correct: "for 3 years.", catch: "THE CATCH: O 'há' ou 'faz' de duração é traduzido por **'for'** (por), seguido da quantidade de tempo. Jamais a tradução literal!" },
+            ]
+          },
+          {
+            id: 6,
+            bp: "Você já foi para a China?",
+            title: "Experiência de Vida ('Have you ever been to...')",
+            variations: {
+              essential: "Have you ever been to China?",
+              polite: "May I ask if you have ever traveled to China?",
+              native: "Been to China before?",
+            },
+            steps: [
+              { bp: "Você já foi", literal: "You already went", correct: "Have you ever been", catch: "THE CATCH: Para perguntar sobre uma experiência de vida ('Já fiz/fui?'), o Inglês usa o **Present Perfect** com 'ever' ('Have you ever...'). O verbo 'to be' ('been') significa 'visitar e voltar'." },
+              { bp: "para a China?", literal: "to the China?", correct: "to China?", catch: "Em Inglês, não usamos o artigo 'the' antes de nomes de países (exceto exceções como 'The United States')." },
+            ]
+          },
+            {
+            id: 7,
+            bp: "A festa é quando?",
+            title: "Perguntando o Tempo (Inversão Simples)",
+            variations: {
+              essential: "When is the party?",
+              polite: "Could you tell me when the party is scheduled?",
+              native: "When's the party at?",
+            },
+            steps: [
+              { bp: "A festa", literal: "-", correct: "The party", catch: "O sujeito da frase." },
+              { bp: "é quando?", literal: "is when?", correct: "is when?", catch: "THE CATCH: Em Português, o 'Quando' pode vir no final. Em Inglês, ele começa a pergunta ('When'). A ordem é: WH-WORD + VERB + SUBJECT. (When is the party)." },
+            ]
+          },
+            {
+            id: 8,
+            bp: "Como está o bolo?",
+            title: "Perguntando a Condição (Omissão de Auxiliar)",
+            variations: {
+              essential: "How is the cake?",
+              polite: "Would you kindly describe the condition of the cake?",
+              native: "How's the cake?",
+            },
+            steps: [
+              { bp: "Como", literal: "-", correct: "How", catch: "Simples: 'Como' é 'How'." },
+              { bp: "está o bolo?", literal: "-", correct: "is the cake?", catch: "THE CATCH: A ordem no Inglês é **WH-WORD + VERB + SUBJECT** ('How is the cake?'). A ordem é mais rígida que no BP. Você não precisa de um auxiliar 'Do' aqui porque o 'is' já é o verbo principal (verbo 'to be')." },
+            ]
+          },
+          // --- NOVAS LIÇÕES ---
+          {
+            id: 9,
+            bp: "Como é o gato?",
+            title: "Perguntando a Descrição (The 'What... like' Catch)",
+            variations: {
+              essential: "What is the cat like?",
+              polite: "Could you describe the cat for me?",
+              native: "What's the cat like?",
+            },
+            steps: [
+              { bp: "Como é", literal: "-", correct: "What is... like?", catch: "THE CATCH: Para perguntar sobre **descrição** ou **características gerais** ('Como ele é?'), o Inglês usa **'What is... like?'**. 'How is' é usado apenas para estado (saúde, humor) no momento." },
+              { bp: "o gato?", literal: "the cat?", correct: "the cat?", catch: "Simples: O sujeito da frase." },
+            ]
+          },
+          {
+            id: 10,
+            bp: "A comida está boa",
+            title: "Afirmação de Qualidade (Adjective vs. Adverb)",
+            variations: {
+              essential: "The food is good.",
+              polite: "The meal is quite delicious.",
+              native: "Food's good. / It's tasting good.",
+            },
+            steps: [
+              { bp: "A comida", literal: "-", correct: "The food", catch: "A palavra 'food' é singular e incontável em Inglês, por isso o verbo é 'is'." },
+              { bp: "está boa", literal: "is well", correct: "is good", catch: "THE CATCH: 'Boa' é um adjetivo (qualidade) e deve ser traduzido por **'good'**. 'Well' é um advérbio (modo) e é usado para descrever como uma ação é feita (e.g., 'He speaks English well')." },
+            ]
+          },
+          {
+            id: 11,
+            bp: "As pessoas são simpáticas",
+            title: "Plural e Falsos Cognatos (Nice vs. Sympathetic)",
+            variations: {
+              essential: "The people are nice.",
+              polite: "The people seem quite friendly.",
+              native: "Everyone's pretty nice here.",
+            },
+            steps: [
+              { bp: "As pessoas", literal: "-", correct: "The people", catch: "THE CATCH: 'People' já é plural em Inglês (não use 'peoples' para se referir a um grupo geral de pessoas), e o verbo deve ser conjugado no plural: 'are'." },
+              { bp: "são simpáticas", literal: "are sympathetic", correct: "are nice / are friendly", catch: "ERRO DE VOCABULÁRIO: 'Sympathetic' (simpatético) significa compadecido/compreensivo. Para dizer que a pessoa é agradável, use **'nice'** ou **'friendly'**." },
+            ]
+          },
+          {
+            id: 12,
+            bp: "Você está assistindo?",
+            title: "Perguntas no Presente Contínuo (Ação Atual)",
+            variations: {
+              essential: "Are you watching?",
+              polite: "Are you currently watching something?",
+              native: "Ya watching that? / Watching?",
+            },
+            steps: [
+              { bp: "Você está", literal: "-", correct: "Are you", catch: "THE CATCH: Para fazer uma pergunta no Presente Contínuo ('-ndo'), você deve **inverter** a ordem: **'To Be' + Sujeito**. (Are you...)." },
+              { bp: "assistindo?", literal: "-", correct: "watching?", catch: "Ação que ocorre *agora*. O verbo principal (watch) deve ter a terminação **-ing**." },
+            ]
+          },
+          {
+            id: 13,
+            bp: "Você está bem?",
+            title: "Perguntas sobre Bem-Estar (Are you...)",
+            variations: {
+              essential: "Are you okay?",
+              polite: "Is everything alright with you?",
+              native: "You good? / You alright?",
+            },
+            steps: [
+              { bp: "Você está", literal: "You are", correct: "Are you", catch: "THE CATCH: Novamente, a pergunta exige a **inversão** do verbo 'To Be' e o sujeito: **'Are you...'**" },
+              { bp: "bem?", literal: "well?", correct: "okay? / well?", catch: "Embora 'Are you well?' seja correto, **'Are you okay?'** é a forma mais comum e abrangente para perguntar sobre saúde, humor ou se algo deu errado." },
+            ]
+          },
+        ];
 
-const App = () => {
-  const [selectedLessonId, setSelectedLessonId] = useState(lessons[lessons.length - 1].id);
-  const [selectedVariation, setSelectedVariation] = useState('essential');
-  // Start in dark mode by default
-  const [darkMode, setDarkMode] = useState(true); 
-  const selectedLesson = lessons.find(l => l.id === selectedLessonId);
-
-  const toggleDarkMode = () => setDarkMode(prev => !prev);
-
-  // Define base colors based on mode
-  const bgColor = darkMode ? 'bg-slate-900' : 'bg-gray-50';
-  const cardColor = darkMode ? 'bg-slate-800' : 'bg-white';
-  const primaryTextColor = darkMode ? 'text-gray-100' : 'text-gray-900';
-  const secondaryTextColor = darkMode ? 'text-indigo-400' : 'text-indigo-600';
-  const cardShadow = darkMode ? 'shadow-2xl shadow-slate-700/50' : 'shadow-xl';
-  const borderColor = darkMode ? 'border-slate-700' : 'border-indigo-100';
-
-  // Placeholder for the necessary environment variables/setup
-  // In a real application, you would initialize Firebase here
-  // const [db, setDb] = useState(null);
-  // const [auth, setAuth] = useState(null);
-  // useEffect(() => {
-  //   const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-  //   const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-  //   // ... Firebase initialization logic goes here
-  // }, []);
-
-
-  if (!selectedLesson) {
-    return <div className="p-8 text-center text-red-500">Lição não encontrada.</div>;
-  }
-
-  return (
-    <div className={`min-h-screen font-sans p-4 sm:p-8 ${bgColor} ${primaryTextColor}`}>
-      <header className="mb-8 text-center relative">
-        {/* Dark Mode Toggle Button */}
-        <button
-            onClick={toggleDarkMode}
-            className={`absolute top-0 right-0 p-2 rounded-full transition-colors duration-300 ${
-                darkMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+        // VariationButton is updated to handle dark mode styles
+        const VariationButton = ({ label, selected, onClick, isDarkMode }) => (
+          <button
+            onClick={onClick}
+            className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
+              selected
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/50'
+                : isDarkMode
+                  ? 'bg-indigo-800/50 text-indigo-300 hover:bg-indigo-700/70'
+                  : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
             }`}
-            aria-label="Toggle Dark Mode"
-        >
-            {darkMode ? 
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.513A10 10 0 0110 20V0c5.523 0 10 4.477 10 10 0 1.574-.36 3.064-1.026 4.398l-1.681-1.681zM10 18a8 8 0 100-16 8 8 0 000 16z" clipRule="evenodd" /></svg>
-                :
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.969 5.836a1 1 0 01-1.748 0L9.293 16a1 1 0 00-1.414 0l-.678.678a1 1 0 01-1.748 0 1 1 0 01-.168-.168l-3.232-3.232a1 1 0 011.414-1.414l3.232 3.232a1 1 0 001.414 0l.678-.678a1 1 0 011.748 0L14.707 16a1 1 0 01-1.414 1.414l-3.232-3.232a1 1 0 01-.168-.168z" clipRule="evenodd" /></svg>
-            }
-        </button>
+          >
+            {label}
+          </button>
+        );
 
-        <h1 className={`text-3xl sm:text-4xl font-extrabold leading-tight ${primaryTextColor}`}>
-          🤖 Daby: Inglês Lego para Brasileiros
-        </h1>
-        <p className={`mt-2 text-lg ${secondaryTextColor}`}>
-          Vamos construir o Inglês, peça por peça, e evitar os erros comuns.
-        </p>
-        
-        {/* TIP FOR STUDENTS */}
-        <p className={`mt-4 mx-auto max-w-2xl text-base italic p-3 rounded-lg border ${darkMode ? 'border-indigo-700 text-indigo-200 bg-slate-800/70' : 'border-indigo-300 text-indigo-700 bg-indigo-50'}`}>
-          **Dica:** Sempre preste atenção à **estrutura das perguntas** (o 'Catch') e ao uso de **auxiliares**. Lembre-se que as versões 'Nativas' podem ser informais demais para algumas situações. Use este arquivo para refinar suas perguntas e **sair do 'inglês de sobrevivência'**!
-        </p>
-        
-      </header>
+        const App = () => {
+          const [selectedLessonId, setSelectedLessonId] = useState(lessons[lessons.length - 1].id);
+          const [selectedVariation, setSelectedVariation] = useState('essential');
+          // Start in dark mode by default
+          const [darkMode, setDarkMode] = useState(true); 
+          const selectedLesson = lessons.find(l => l.id === selectedLessonId);
 
-      {/* Selector and Main Content Grid */}
-      <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
-        
-        {/* Sidebar: Lesson Selector */}
-        <div className={`lg:w-1/3 p-6 rounded-xl ${cardColor} ${cardShadow} h-fit border ${borderColor}`}>
-          <h2 className={`text-xl font-bold mb-4 ${secondaryTextColor}`}>Selecione uma Frase (BP)</h2>
-          <div className="space-y-2">
-            {lessons.map(lesson => (
-              <button
-                key={lesson.id}
-                onClick={() => {
-                  setSelectedLessonId(lesson.id);
-                  setSelectedVariation('essential');
-                }}
-                className={`w-full text-left p-3 rounded-lg transition-all duration-200 font-medium ${
-                  lesson.id === selectedLessonId
-                    ? 'bg-indigo-500 text-white shadow-md'
-                    : darkMode
-                      ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
-                }`}
-              >
-                {lesson.bp}
-              </button>
-            ))}
-          </div>
-        </div>
+          const toggleDarkMode = () => setDarkMode(prev => !prev);
 
-        {/* Main Lesson Content */}
-        <div className="lg:w-2/3 space-y-8">
+          // Define base colors based on mode
+          const bgColor = darkMode ? 'bg-slate-900' : 'bg-gray-50';
+          const cardColor = darkMode ? 'bg-slate-800' : 'bg-white';
+          const primaryTextColor = darkMode ? 'text-gray-100' : 'text-gray-900';
+          const secondaryTextColor = darkMode ? 'text-indigo-400' : 'text-indigo-600';
+          const cardShadow = darkMode ? 'shadow-2xl shadow-slate-700/50' : 'shadow-xl';
+          const borderColor = darkMode ? 'border-slate-700' : 'border-indigo-100';
 
-          {/* Current Lesson Title */}
-          <div className={`p-6 rounded-xl ${cardColor} ${cardShadow} border-l-4 border-indigo-600`}>
-            <p className="text-xl font-light text-gray-500 mb-1">Frase Selecionada:</p>
-            <h2 className={`text-3xl font-extrabold ${primaryTextColor}`}>{selectedLesson.bp}</h2>
-            <p className={`mt-2 font-semibold ${secondaryTextColor}`}>{selectedLesson.title}</p>
-          </div>
+          // NOTE: Firebase/Auth code is omitted as it requires a build step and server environment for secure key handling,
+          // which is outside the scope of a single-file GitHub Pages deployment.
 
-          {/* Lego Breakdown Section */}
-          <div className={`p-6 rounded-xl ${cardColor} ${cardShadow}`}>
-            <h3 className={`text-2xl font-bold mb-4 ${primaryTextColor} border-b pb-2`}>🧱 Método LEGO: Desmontando e Construindo</h3>
-            <div className="space-y-6">
-              {selectedLesson.steps.map((step, index) => (
-                <div key={index} className={`border p-4 rounded-lg ${darkMode ? 'border-slate-700 bg-slate-700/50' : 'border-gray-200 bg-indigo-50/50'}`}>
-                  <p className="text-sm font-semibold text-gray-500 mb-2">Bloco {index + 1}</p>
-                  
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    {/* BP Block */}
-                    <div className="text-center p-2 rounded-lg bg-pink-100 border border-pink-300">
-                      <p className="font-bold text-pink-700 text-lg">{step.bp}</p>
-                      <p className="text-xs text-pink-500">PORTUGUÊS (BR)</p>
-                    </div>
-                    
-                    {/* Literal/Incorrect Block */}
-                    <div className="text-center p-2 rounded-lg bg-red-100 border border-red-300">
-                      <p className="font-bold text-red-700 text-lg">{step.literal}</p>
-                      <p className="text-xs text-red-500">TRADUÇÃO LITERAL (INCORRETA)</p>
-                    </div>
-                    
-                    {/* Correct Block */}
-                    <div className="text-center p-2 rounded-lg bg-green-100 border border-green-300">
-                      <p className="font-bold text-green-700 text-lg">{step.correct}</p>
-                      <p className="text-xs text-green-500">BLOCO LEGO (CORRETO)</p>
-                    </div>
-                  </div>
+          if (!selectedLesson) {
+            return <div className="p-8 text-center text-red-500">Lição não encontrada.</div>;
+          }
 
-                  <div className={`mt-3 p-3 rounded-lg border ${darkMode ? 'bg-slate-700 border-indigo-600' : 'bg-white border-indigo-300'}`}>
-                    <p className="font-extrabold text-indigo-500">🚨 O CATCH / O ERRO ANTECIPADO:</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-200' : 'text-gray-700'} mt-1`}>{step.catch}</p>
+          return (
+            <div className={`min-h-screen font-sans p-4 sm:p-8 ${bgColor} ${primaryTextColor} w-full`}>
+              <header className="mb-8 text-center relative">
+                {/* Dark Mode Toggle Button */}
+                <button
+                    onClick={toggleDarkMode}
+                    className={`absolute top-0 right-0 p-2 rounded-full transition-colors duration-300 ${
+                        darkMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    }`}
+                    aria-label="Toggle Dark Mode"
+                >
+                    {darkMode ? 
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.513A10 10 0 0110 20V0c5.523 0 10 4.477 10 10 0 1.574-.36 3.064-1.026 4.398l-1.681-1.681zM10 18a8 8 0 100-16 8 8 0 000 16z" clipRule="evenodd" /></svg>
+                        :
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.969 5.836a1 1 0 01-1.748 0L9.293 16a1 1 0 00-1.414 0l-.678.678a1 1 0 01-1.748 0 1 1 0 01-.168-.168l-3.232-3.232a1 1 0 011.414-1.414l3.232 3.232a1 1 0 001.414 0l.678-.678a1 1 0 011.748 0L14.707 16a1 1 0 01-1.414 1.414l-3.232-3.232a1 1 0 01-.168-.168z" clipRule="evenodd" /></svg>
+                    }
+                </button>
+
+                <h1 className={`text-3xl sm:text-4xl font-extrabold leading-tight ${primaryTextColor}`}>
+                  🤖 Daby: Inglês Lego para Brasileiros
+                </h1>
+                <p className={`mt-2 text-lg ${secondaryTextColor}`}>
+                  Vamos construir o Inglês, peça por peça, e evitar os erros comuns.
+                </p>
+                
+                {/* TIP FOR STUDENTS */}
+                <p className={`mt-4 mx-auto max-w-2xl text-base italic p-3 rounded-lg border ${darkMode ? 'border-indigo-700 text-indigo-200 bg-slate-800/70' : 'border-indigo-300 text-indigo-700 bg-indigo-50'}`}>
+                  **Dica:** Sempre preste atenção à **estrutura das perguntas** (o 'Catch') e ao uso de **auxiliares**. Lembre-se que as versões 'Nativas' podem ser informais demais para algumas situações. Use este arquivo para refinar suas perguntas e **sair do 'inglês de sobrevivência'**!
+                </p>
+                
+              </header>
+
+              {/* Selector and Main Content Grid */}
+              <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+                
+                {/* Sidebar: Lesson Selector */}
+                <div className={`lg:w-1/3 p-6 rounded-xl ${cardColor} ${cardShadow} h-fit border ${borderColor}`}>
+                  <h2 className={`text-xl font-bold mb-4 ${secondaryTextColor}`}>Selecione uma Frase (BP)</h2>
+                  <div className="space-y-2">
+                    {lessons.map(lesson => (
+                      <button
+                        key={lesson.id}
+                        onClick={() => {
+                          setSelectedLessonId(lesson.id);
+                          setSelectedVariation('essential');
+                        }}
+                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 font-medium ${
+                          lesson.id === selectedLessonId
+                            ? 'bg-indigo-500 text-white shadow-md'
+                            : darkMode
+                              ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                              : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                        }`}
+                      >
+                        {lesson.bp}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Variation Section */}
-          <div className={`p-6 rounded-xl ${cardColor} ${cardShadow}`}>
-            <h3 className={`text-2xl font-bold mb-4 ${primaryTextColor} border-b pb-2`}>🗣️ Versões para o Mundo Real</h3>
-            <div className="flex flex-wrap gap-3 mb-6">
-              <VariationButton 
-                label="BÁSICO/ESSENCIAL" 
-                selected={selectedVariation === 'essential'}
-                onClick={() => setSelectedVariation('essential')}
-                isDarkMode={darkMode}
-              />
-              <VariationButton 
-                label="EDUCADO (Polite)" 
-                selected={selectedVariation === 'polite'}
-                onClick={() => setSelectedVariation('polite')}
-                isDarkMode={darkMode}
-              />
-              <VariationButton 
-                label="NATIVO (Native/Casual)" 
-                selected={selectedVariation === 'native'}
-                onClick={() => setSelectedVariation('native')}
-                isDarkMode={darkMode}
-              />
-            </div>
-            
-            <div className={`p-4 sm:p-6 rounded-lg border-l-4 ${darkMode ? 'bg-slate-700 border-indigo-500' : 'bg-indigo-50 border-indigo-500'}`}>
-              <p className={`text-sm font-medium mb-1 ${secondaryTextColor}`}>
-                Versão Selecionada: <span className="uppercase">{selectedVariation}</span>
-              </p>
-              <p className={`text-2xl font-extrabold ${primaryTextColor} break-words`}>
-                {selectedLesson.variations[selectedVariation]}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+                {/* Main Lesson Content */}
+                <div className="lg:w-2/3 space-y-8">
 
-export default App;
+                  {/* Current Lesson Title */}
+                  <div className={`p-6 rounded-xl ${cardColor} ${cardShadow} border-l-4 border-indigo-600`}>
+                    <p className="text-xl font-light text-gray-500 mb-1">Frase Selecionada:</p>
+                    <h2 className={`text-3xl font-extrabold ${primaryTextColor}`}>{selectedLesson.bp}</h2>
+                    <p className={`mt-2 font-semibold ${secondaryTextColor}`}>{selectedLesson.title}</p>
+                  </div>
+
+                  {/* Lego Breakdown Section */}
+                  <div className={`p-6 rounded-xl ${cardColor} ${cardShadow}`}>
+                    <h3 className={`text-2xl font-bold mb-4 ${primaryTextColor} border-b pb-2`}>🧱 Método LEGO: Desmontando e Construindo</h3>
+                    <div className="space-y-6">
+                      {selectedLesson.steps.map((step, index) => (
+                        <div key={index} className={`border p-4 rounded-lg ${darkMode ? 'border-slate-700 bg-slate-700/50' : 'border-gray-200 bg-indigo-50/50'}`}>
+                          <p className="text-sm font-semibold text-gray-500 mb-2">Bloco {index + 1}</p>
+                          
+                          <div className="grid grid-cols-3 gap-3 mb-3">
+                            {/* BP Block */}
+                            <div className="text-center p-2 rounded-lg bg-pink-100 border border-pink-300">
+                              <p className="font-bold text-pink-700 text-lg">{step.bp}</p>
+                              <p className="text-xs text-pink-500">PORTUGUÊS (BR)</p>
+                            </div>
+                            
+                            {/* Literal/Incorrect Block */}
+                            <div className="text-center p-2 rounded-lg bg-red-100 border border-red-300">
+                              <p className="font-bold text-red-700 text-lg">{step.literal}</p>
+                              <p className="text-xs text-red-500">TRADUÇÃO LITERAL (INCORRETA)</p>
+                            </div>
+                            
+                            {/* Correct Block */}
+                            <div className="text-center p-2 rounded-lg bg-green-100 border border-green-300">
+                              <p className="font-bold text-green-700 text-lg">{step.correct}</p>
+                              <p className="text-xs text-green-500">BLOCO LEGO (CORRETO)</p>
+                            </div>
+                          </div>
+
+                          <div className={`mt-3 p-3 rounded-lg border ${darkMode ? 'bg-slate-700 border-indigo-600' : 'bg-white border-indigo-300'}`}>
+                            <p className="font-extrabold text-indigo-500">🚨 O CATCH / O ERRO ANTECIPADO:</p>
+                            <p className={`text-sm ${darkMode ? 'text-gray-200' : 'text-gray-700'} mt-1`}>{step.catch}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Variation Section */}
+                  <div className={`p-6 rounded-xl ${cardColor} ${cardShadow}`}>
+                    <h3 className={`text-2xl font-bold mb-4 ${primaryTextColor} border-b pb-2`}>🗣️ Versões para o Mundo Real</h3>
+                    <div className="flex flex-wrap gap-3 mb-6">
+                      <VariationButton 
+                        label="BÁSICO/ESSENCIAL" 
+                        selected={selectedVariation === 'essential'}
+                        onClick={() => setSelectedVariation('essential')}
+                        isDarkMode={darkMode}
+                      />
+                      <VariationButton 
+                        label="EDUCADO (Polite)" 
+                        selected={selectedVariation === 'polite'}
+                        onClick={() => setSelectedVariation('polite')}
+                        isDarkMode={darkMode}
+                      />
+                      <VariationButton 
+                        label="NATIVO (Native/Casual)" 
+                        selected={selectedVariation === 'native'}
+                        onClick={() => setSelectedVariation('native')}
+                        isDarkMode={darkMode}
+                      />
+                    </div>
+                    
+                    <div className={`p-4 sm:p-6 rounded-lg border-l-4 ${darkMode ? 'bg-slate-700 border-indigo-500' : 'bg-indigo-50 border-indigo-500'}`}>
+                      <p className={`text-sm font-medium mb-1 ${secondaryTextColor}`}>
+                        Versão Selecionada: <span className="uppercase">{selectedVariation}</span>
+                      </p>
+                      <p className={`text-2xl font-extrabold ${primaryTextColor} break-words`}>
+                        {selectedLesson.variations[selectedVariation]}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+        
+        // Render the App component using the React root API
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
